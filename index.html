@@ -693,48 +693,5 @@
     </div>
 
     <script src="script.js"></script>
-    
-    <script>
-    // Função para garantir que o formulário de login funcione corretamente
-    document.addEventListener('DOMContentLoaded', function() {
-        const loginForm = document.getElementById('loginForm');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        
-        if (loginForm && usernameInput && passwordInput) {
-            // Focar no campo de usuário ao carregar a página
-            setTimeout(() => {
-                usernameInput.focus();
-            }, 100);
-            
-            // Prevenir comportamento padrão do formulário
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                return false;
-            });
-        }
-        
-        // Verificar se há dados salvos
-        const savedDB = localStorage.getItem('conteinerBeerDB');
-        if (!savedDB) {
-            // Inicializar dados padrão se não existirem
-            const defaultDB = {
-                products: [],
-                sales: [],
-                expenses: [],
-                receivables: [],
-                settings: {
-                    company: { name: "CONTEINER BEER", address: "", phone: "", email: "" },
-                    sales: { defaultPaymentMethod: "Dinheiro", taxPercentage: 0, enableStockControl: true, enableLowStockAlert: true },
-                    notifications: { notifyLowStock: true, notifyOverdue: true, notifyDailySales: true, notificationSound: "default" },
-                    backup: { frequency: 30, notifyOnBackup: true }
-                },
-                users: [{ username: "admin", password: "admin", name: "Administrador", role: "admin" }],
-                notifications: []
-            };
-            localStorage.setItem('conteinerBeerDB', JSON.stringify(defaultDB));
-        }
-    });
-    </script>
 </body>
 </html>
