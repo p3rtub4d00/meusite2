@@ -411,8 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setupEventListeners = () => {
-        // O listener do formulário de login foi MOVIDO para a função init()
-
         // Logout
         if (elements.logoutBtn) {
             elements.logoutBtn.addEventListener('click', logout);
@@ -585,7 +583,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Botões de ação nas tabelas
         document.querySelector('main').addEventListener('click', (e) => {
-            const target = e.target;
+            const target = e.target.closest('button'); // Garantir que pegamos o botão, mesmo que o clique seja no ícone dentro dele
+            if (!target) return;
+
             const id = target.dataset.id;
             
             if (target.classList.contains('btn-edit')) showProductModal(id);
@@ -607,6 +607,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderAll();
                     showNotification('Conta Recebida', 'Conta marcada como paga.', 'success');
                 }
+            }
+
+            // CORREÇÃO: Adicionada a lógica para o botão de detalhes
+            if (target.classList.contains('btn-details')) {
+                showSaleDetailsModal(id);
             }
         });
         
@@ -680,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.monthExpenses) elements.monthExpenses.textContent = formatCurrency(monthExpensesTotal);
         
         const daysInMonth = new Date(thisYear, thisMonth + 1, 0).getDate();
-        const dailyAverage = monthExpensesTotal / daysInMonth;
+        const dailyAverage = monthExpensesTotal > 0 ? monthExpensesTotal / daysInMonth : 0;
         if (elements.dailyAverage) elements.dailyAverage.textContent = formatCurrency(dailyAverage);
         
         const highestExpense = monthExpenses.length > 0 ? 
@@ -730,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const profitClass = profitMargin >= 50 ? 'success' : profitMargin >= 20 ? 'warning' : 'danger';
             
             const tr = elements.productsTable.insertRow();
-            tr.style.color = p.quantity <= p.lowStockThreshold ? '#ffc107' : 'inherit';
+            tr.style.color = p.quantity <= p.lowStockThreshold && p.quantity > 0 ? '#ffc107' : (p.quantity === 0 ? '#dc3545' : 'inherit');
             tr.innerHTML = `
                 <td>${p.id}</td>
                 <td>${p.name}</td>
@@ -792,7 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${s.paymentMethod}</td>
                 <td>${s.status}</td>
                 <td>
-                    <button class="btn btn-sm">Detalhes</button>
+                    <button class="btn btn-sm btn-details" data-id="${s.id}">Detalhes</button>
                 </td>`;
         });
     };
@@ -825,6 +830,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DB.receivables.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).forEach(r => {
             const dueDate = new Date(r.dueDate);
             const today = new Date();
+            today.setHours(0,0,0,0);
             const diffTime = dueDate - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
@@ -841,7 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusClass = 'warning';
                 daysText = 'Vence hoje';
             } else {
-                daysText = `${diffDays} dias`;
+                daysText = `Vence em ${diffDays} dias`;
             }
             
             const tr = elements.receivablesTable.insertRow();
@@ -866,7 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const weekLater = new Date();
         weekLater.setDate(today.getDate() + 7);
         const weekReceivables = pendingReceivables
-            .filter(r => new Date(r.dueDate) <= weekLater)
+            .filter(r => new Date(r.dueDate) >= today && new Date(r.dueDate) <= weekLater)
             .reduce((acc, r) => acc + r.value, 0);
             
         const overdueReceivables = pendingReceivables
@@ -911,6 +917,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- GRÁFICOS ---
+    // CORREÇÃO: Conteúdo das funções de gráfico restaurado
     const setupCharts = () => {
         setupSalesChart();
         setupProductsChart();
@@ -932,10 +939,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return saleDate >= startDate && saleDate <= endDate;
         }).forEach(sale => {
             sale.products.forEach(product => {
-                if (!salesByCategory[product.name]) {
-                    salesByCategory[product.name] = 0;
+                const productName = DB.products.find(p => p.id === product.id)?.name || product.name;
+                if (!salesByCategory[productName]) {
+                    salesByCategory[productName] = 0;
                 }
-                salesByCategory[product.name] += product.quantity * product.price;
+                salesByCategory[productName] += product.quantity * product.price;
             });
         });
         
@@ -966,7 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return 'R$ ' + value.toFixed(2);
+                                return formatCurrency(value);
                             }
                         }
                     }
@@ -978,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return 'R$ ' + context.raw.toFixed(2);
+                                return formatCurrency(context.raw);
                             }
                         }
                     }
@@ -995,10 +1003,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         DB.sales.forEach(sale => {
             sale.products.forEach(product => {
-                if (!productSales[product.name]) {
-                    productSales[product.name] = 0;
+                const productName = DB.products.find(p => p.id === product.id)?.name || product.name;
+                if (!productSales[productName]) {
+                    productSales[productName] = 0;
                 }
-                productSales[product.name] += product.quantity;
+                productSales[productName] += product.quantity;
             });
         });
         
@@ -1049,11 +1058,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- MODAL SYSTEM ---
-    const openModal = (title, formHTML, onSave, data = null) => {
+    const openModal = (title, formHTML, onSave, data = null, options = {}) => {
         currentModalData = data;
         elements.modalTitle.textContent = title;
         elements.modalBody.innerHTML = formHTML;
         onSaveCallback = onSave;
+        
+        // CORREÇÃO: Lógica para mostrar/esconder o botão Salvar
+        if (options.showSaveButton === false) {
+            elements.modalSaveBtn.classList.add('hidden');
+        } else {
+            elements.modalSaveBtn.classList.remove('hidden');
+        }
+
         elements.modalContainer.classList.remove('hidden');
     };
 
@@ -1124,6 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             saveDB();
             renderAll();
+            setupCharts();
             return true;
         };
 
@@ -1243,7 +1261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             saveDB();
             renderAll();
-            showNotification('Venda Registrada', `Venda para ${client} registrada com sucesso.`, 'success');
+            setupCharts();
             return true;
         });
 
@@ -1329,6 +1347,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     };
 
+    // CORREÇÃO: Nova função para o modal de detalhes da venda
+    const showSaleDetailsModal = (saleId) => {
+        const sale = DB.sales.find(s => s.id === Number(saleId));
+        if (!sale) return;
+
+        const title = `Detalhes da Venda - ${sale.id}`;
+
+        let productsHTML = sale.products.map(p => `
+            <li>${p.quantity}x ${p.name} - ${formatCurrency(p.price)} (Subtotal: ${formatCurrency(p.quantity * p.price)})</li>
+        `).join('');
+
+        const formHTML = `
+            <p><strong>Cliente:</strong> ${sale.client}</p>
+            <p><strong>Data/Hora:</strong> ${formatDateTime(sale.date)}</p>
+            <p><strong>Valor Total:</strong> ${formatCurrency(sale.total)}</p>
+            <p><strong>Método de Pagamento:</strong> ${sale.paymentMethod}</p>
+            <hr>
+            <h4>Produtos:</h4>
+            <ul>${productsHTML}</ul>
+        `;
+
+        // onSave é null porque não há ação de salvar. O options esconde o botão Salvar.
+        openModal(title, formHTML, null, sale, { showSaveButton: false });
+    };
+
     const showExpenseModal = () => {
         const formHTML = `
             <div class="form-group">
@@ -1365,15 +1408,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return false;
             }
 
-            DB.expenses.push({
-                id: Date.now(),
-                date,
-                description,
-                category,
-                value,
-                provider
-            });
-
+            DB.expenses.push({ id: Date.now(), date, description, category, value, provider });
             saveDB();
             renderAll();
             showNotification('Gasto Registrado', `Gasto "${description}" registrado com sucesso.`, 'success');
@@ -1409,14 +1444,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return false;
             }
 
-            DB.receivables.push({
-                id: Date.now(),
-                client,
-                value,
-                dueDate,
-                status: 'Pendente'
-            });
-
+            DB.receivables.push({ id: Date.now(), client, value, dueDate, status: 'Pendente' });
             saveDB();
             renderAll();
             showNotification('Conta a Receber Adicionada', `Conta de ${client} adicionada com sucesso.`, 'success');
@@ -1610,7 +1638,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // CORREÇÃO: Listener do formulário de login movido para cá para garantir que ele seja ativado no início.
+        // Listener do formulário de login
         if (elements.loginForm) {
             elements.loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
