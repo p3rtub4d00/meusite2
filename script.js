@@ -116,7 +116,20 @@ document.addEventListener('DOMContentLoaded', () => {
         companySettingsForm: document.getElementById('companySettingsForm'),
         salesSettingsForm: document.getElementById('salesSettingsForm'),
         notificationsSettingsForm: document.getElementById('notificationsSettingsForm'),
-        addUserBtn: document.getElementById('addUserBtn')
+        addUserBtn: document.getElementById('addUserBtn'),
+
+        // Elementos para o Fechamento de Caixa
+        cashClosingDate: document.getElementById('cashClosingDate'),
+        cashClosingInitialValue: document.getElementById('cashClosingInitialValue'),
+        generateClosingBtn: document.getElementById('generateClosingBtn'),
+        closingResult: document.getElementById('closingResult'),
+        closingDateResult: document.getElementById('closingDateResult'),
+        closingCashSales: document.getElementById('closingCashSales'),
+        closingCardSales: document.getElementById('closingCardSales'),
+        closingTotalSales: document.getElementById('closingTotalSales'),
+        closingInitialValue: document.getElementById('closingInitialValue'),
+        closingExpenses: document.getElementById('closingExpenses'),
+        closingExpectedCash: document.getElementById('closingExpectedCash'),
     };
 
     let onSaveCallback = null;
@@ -135,7 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('pt-BR');
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
     };
 
     const formatDateTime = (dateString) => {
@@ -583,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Botões de ação nas tabelas
         document.querySelector('main').addEventListener('click', (e) => {
-            const target = e.target.closest('button'); // Garantir que pegamos o botão, mesmo que o clique seja no ícone dentro dele
+            const target = e.target.closest('button');
             if (!target) return;
 
             const id = target.dataset.id;
@@ -609,7 +623,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // CORREÇÃO: Adicionada a lógica para o botão de detalhes
             if (target.classList.contains('btn-details')) {
                 showSaleDetailsModal(id);
             }
@@ -636,6 +649,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         document.getElementById('generateReportBtn')?.addEventListener('click', generatePDFReport);
+        
+        if (elements.generateClosingBtn) {
+            elements.generateClosingBtn.addEventListener('click', generateCashClosing);
+        }
+
+        if (elements.cashClosingDate) {
+            elements.cashClosingDate.value = getTodayDate();
+        }
     };
 
     // --- RENDERIZAÇÃO DE DADOS ---
@@ -876,7 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .reduce((acc, r) => acc + r.value, 0);
             
         const overdueReceivables = pendingReceivables
-            .filter(r => new Date(r.dueDate) < today)
+            .filter(r => new Date(r.dueDate) < today && new Date(r.dueDate).toDateString() !== today.toDateString())
             .reduce((acc, r) => acc + r.value, 0);
             
         const totalReceivablesEl = document.getElementById('totalReceivables');
@@ -917,7 +938,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- GRÁFICOS ---
-    // CORREÇÃO: Conteúdo das funções de gráfico restaurado
     const setupCharts = () => {
         setupSalesChart();
         setupProductsChart();
@@ -939,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return saleDate >= startDate && saleDate <= endDate;
         }).forEach(sale => {
             sale.products.forEach(product => {
-                const productName = DB.products.find(p => p.id === product.id)?.name || product.name;
+                const productName = product.name;
                 if (!salesByCategory[productName]) {
                     salesByCategory[productName] = 0;
                 }
@@ -1003,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         DB.sales.forEach(sale => {
             sale.products.forEach(product => {
-                const productName = DB.products.find(p => p.id === product.id)?.name || product.name;
+                const productName = product.name;
                 if (!productSales[productName]) {
                     productSales[productName] = 0;
                 }
@@ -1064,7 +1084,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.modalBody.innerHTML = formHTML;
         onSaveCallback = onSave;
         
-        // CORREÇÃO: Lógica para mostrar/esconder o botão Salvar
         if (options.showSaveButton === false) {
             elements.modalSaveBtn.classList.add('hidden');
         } else {
@@ -1347,7 +1366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     };
 
-    // CORREÇÃO: Nova função para o modal de detalhes da venda
     const showSaleDetailsModal = (saleId) => {
         const sale = DB.sales.find(s => s.id === Number(saleId));
         if (!sale) return;
@@ -1368,7 +1386,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <ul>${productsHTML}</ul>
         `;
 
-        // onSave é null porque não há ação de salvar. O options esconde o botão Salvar.
         openModal(title, formHTML, null, sale, { showSaveButton: false });
     };
 
@@ -1535,6 +1552,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
         document.getElementById('reportStartDate').value = firstDay.toISOString().slice(0, 10);
         document.getElementById('reportEndDate').value = today.toISOString().slice(0, 10);
+    };
+
+    const generateCashClosing = () => {
+        const date = elements.cashClosingDate.value;
+        const initialValue = parseFormattedNumber(elements.cashClosingInitialValue.value) || 0;
+
+        if (!date) {
+            alert("Por favor, selecione uma data para o fechamento.");
+            return;
+        }
+
+        const salesForDate = DB.sales.filter(s => s.date.slice(0, 10) === date);
+        const expensesForDate = DB.expenses.filter(e => e.date.slice(0, 10) === date);
+
+        let totalCashSales = 0;
+        let totalCardSales = 0;
+        salesForDate.forEach(sale => {
+            if (sale.paymentMethod === 'Dinheiro') {
+                totalCashSales += sale.total;
+            } else if (sale.paymentMethod === 'PIX' || sale.paymentMethod === 'Cartão') {
+                totalCardSales += sale.total;
+            } else if (sale.paymentMethod === 'Mixto') {
+                totalCashSales += sale.payment?.cash || 0;
+                totalCardSales += sale.payment?.card || 0;
+            }
+        });
+
+        const totalSales = totalCashSales + totalCardSales;
+        const totalExpenses = expensesForDate.reduce((acc, exp) => acc + exp.value, 0);
+        
+        const expectedCash = (initialValue + totalCashSales) - totalExpenses;
+
+        elements.closingDateResult.textContent = `Resumo do dia: ${formatDate(date)}`;
+        elements.closingCashSales.textContent = formatCurrency(totalCashSales);
+        elements.closingCardSales.textContent = formatCurrency(totalCardSales);
+        elements.closingTotalSales.textContent = formatCurrency(totalSales);
+        elements.closingInitialValue.textContent = formatCurrency(initialValue);
+        elements.closingExpenses.textContent = formatCurrency(totalExpenses);
+        elements.closingExpectedCash.textContent = formatCurrency(expectedCash);
+
+        elements.closingResult.classList.remove('hidden');
     };
 
     // --- RELATÓRIOS PDF ---
