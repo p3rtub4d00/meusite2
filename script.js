@@ -169,14 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
         updateNotificationsUI();
         saveDB();
         
-        // Reproduzir som de notificação se configurado
         if (DB.settings.notifications.notificationSound !== 'none') {
             playNotificationSound();
         }
     };
 
     const playNotificationSound = () => {
-        // Implementação simplificada de som de notificação
         const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF5fdJivrJBhNjVgodDbq2EcBSt5r9rJfUj/AE6Yx9KdZEj/AFyf0sWQY1D/AGWl2LqJZ1j/AHCs3rOCZ2D/AHu047CBaGj/AIa56Kp/aHD/AJDD7qd+aXj/AJfJ9KZ+anj/AKDP+6V+a3z/AKfU/6R+bID/ALHZBKJ+bYD/ALjeB6B+boD/AMThDJ5+b4D/AMvkEZ1+cID/ANHnF5t+cYD/ANjqHJp+coD/ANztH5h+c4D/AODwI5Z+dID/AOPzJpR+dYD/AOb2KZJ+doD/AOz5LJB+d4D/APD8Lo5+eID/APQAMYx+eYD/APcCNIp9eoD/APoEOYh9e4D/AP0GPIZ9fID/AP8I');
         audio.volume = 0.3;
         audio.play().catch(() => {});
@@ -185,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateNotificationsUI = () => {
         const unreadCount = DB.notifications.filter(n => !n.read).length;
         
-        // Atualizar contador
         if (unreadCount > 0) {
             elements.notificationCount.textContent = unreadCount;
             elements.notificationCount.classList.remove('hidden');
@@ -193,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.notificationCount.classList.add('hidden');
         }
         
-        // Atualizar lista de notificações
         if (elements.notificationsList) {
             elements.notificationsList.innerHTML = '';
             DB.notifications.slice(0, 10).forEach(notification => {
@@ -248,11 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadDB = () => {
         const data = JSON.parse(localStorage.getItem('conteinerBeerDB'));
         if (data) {
-            // Mesclar os dados salvos com a estrutura padrão
             Object.keys(DB).forEach(key => {
                 if (data[key] !== undefined) {
                     if (key === 'settings' && data[key]) {
-                        // Mesclar configurações aninhadas
                         Object.keys(DB.settings).forEach(settingKey => {
                             if (data.settings[settingKey]) {
                                 DB.settings[settingKey] = { 
@@ -280,39 +274,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SISTEMA DE BACKUP ---
     const setupBackupSystem = () => {
-        // Configurar intervalo de backup
         const frequency = DB.settings.backup.frequency;
         setupBackupInterval(frequency);
-        
-        // Atualizar UI do backup
         updateBackupUI();
     };
 
     const setupBackupInterval = (minutes) => {
-        // Limpar intervalo existente
         if (backupInterval) {
             clearInterval(backupInterval);
         }
-        
-        // Configurar novo intervalo
         backupInterval = setInterval(createBackup, minutes * 60 * 1000);
-        
-        // Atualizar próximo backup
         updateNextBackupTime(minutes);
     };
 
     const createBackup = () => {
         localStorage.setItem('conteinerBeerDB_backup', JSON.stringify(DB));
         localStorage.setItem('conteinerBeerDB_backupTime', new Date().toISOString());
-        
-        // Atualizar UI
         updateBackupUI();
-        
-        // Notificar se configurado
         if (DB.settings.backup.notifyOnBackup) {
             showNotification('Backup Realizado', 'Backup dos dados realizado com sucesso.', 'success');
         }
-        
         console.log('Backup automático realizado:', new Date().toLocaleString('pt-BR'));
     };
 
@@ -320,13 +301,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm('Tem certeza que deseja restaurar o último backup? Os dados atuais serão substituídos.')) {
             const backupData = JSON.parse(localStorage.getItem('conteinerBeerDB_backup'));
             if (backupData) {
-                // Restaurar dados
                 Object.keys(DB).forEach(key => {
                     if (backupData[key] !== undefined) {
                         DB[key] = backupData[key];
                     }
                 });
-                
                 saveDB();
                 renderAll();
                 showNotification('Backup Restaurado', 'Dados restaurados do backup com sucesso.', 'success');
@@ -344,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
-        
         showNotification('Download de Backup', 'Download do arquivo de backup realizado com sucesso.', 'success');
     };
 
@@ -364,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SISTEMA DE LOGIN E SEGURANÇA ---
     const setupLoginSystem = () => {
-        // Verificar se já está logado
         const savedUser = localStorage.getItem('conteinerBeer_currentUser');
         if (savedUser) {
             currentUser = JSON.parse(savedUser);
@@ -383,8 +360,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.loginScreen) elements.loginScreen.classList.add('hidden');
         if (elements.mainSystem) elements.mainSystem.classList.remove('hidden');
         if (elements.userName) elements.userName.textContent = currentUser.name;
-        
-        // Inicializar sistema principal
         initializeMainSystem();
     };
 
@@ -412,19 +387,15 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         renderAll();
         setupCharts();
-        
-        // Verificar notificações iniciais
         checkInitialNotifications();
     };
 
     const checkInitialNotifications = () => {
-        // Verificar estoque baixo
         const lowStockItems = DB.products.filter(p => p.quantity <= p.lowStockThreshold);
         if (lowStockItems.length > 0 && DB.settings.notifications.notifyLowStock) {
             showNotification('Estoque Baixo', `${lowStockItems.length} produtos com estoque baixo.`, 'warning');
         }
         
-        // Verificar contas vencidas
         const today = new Date();
         const overdueReceivables = DB.receivables.filter(r => {
             if (r.status === 'Pendente') {
@@ -440,22 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setupEventListeners = () => {
-        // Login
-        if (elements.loginForm) {
-            elements.loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const username = elements.username.value;
-                const password = elements.password.value;
-                
-                if (login(username, password)) {
-                    elements.username.value = '';
-                    elements.password.value = '';
-                } else {
-                    alert('Usuário ou senha incorretos.');
-                }
-            });
-        }
-        
+        // O listener do formulário de login foi MOVIDO para a função init()
+
         // Logout
         if (elements.logoutBtn) {
             elements.logoutBtn.addEventListener('click', logout);
@@ -464,8 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Sidebar toggle
         if (elements.sidebarToggle) {
             elements.sidebarToggle.addEventListener('click', () => {
-                // CORREÇÃO: A classe 'open' foi adicionada para compatibilidade com o CSS mobile,
-                // mas a classe principal de controle continua sendo 'collapsed'.
                 elements.sidebar.classList.toggle('collapsed');
             });
         }
@@ -475,24 +430,19 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    
-                    // Atualizar navegação
                     elements.navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
                     
-                    // Mostrar seção correspondente
                     const target = link.dataset.target;
                     document.querySelectorAll('.content-section').forEach(section => {
                         section.classList.remove('active');
                     });
                     document.getElementById(target).classList.add('active');
                     
-                    // Atualizar título da página
                     if (elements.pageTitle) {
                         elements.pageTitle.textContent = link.querySelector('span').textContent;
                     }
                     
-                    // Fechar painel de notificações se aberto
                     if (elements.notificationsPanel) {
                         elements.notificationsPanel.classList.add('hidden');
                     }
@@ -524,7 +474,6 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.clearNotificationsBtn.addEventListener('click', markAllNotificationsAsRead);
         }
         
-        // Fechar painel de notificações ao clicar fora
         document.addEventListener('click', (e) => {
             if (elements.notificationsPanel && !elements.notificationsPanel.contains(e.target) && e.target !== elements.notificationsBtn) {
                 elements.notificationsPanel.classList.add('hidden');
@@ -542,17 +491,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Backup
-        if (elements.backupNowBtn) {
-            elements.backupNowBtn.addEventListener('click', createBackup);
-        }
-        
-        if (elements.restoreBackupBtn) {
-            elements.restoreBackupBtn.addEventListener('click', restoreBackup);
-        }
-        
-        if (elements.downloadBackupBtn) {
-            elements.downloadBackupBtn.addEventListener('click', downloadBackup);
-        }
+        if (elements.backupNowBtn) elements.backupNowBtn.addEventListener('click', createBackup);
+        if (elements.restoreBackupBtn) elements.restoreBackupBtn.addEventListener('click', restoreBackup);
+        if (elements.downloadBackupBtn) elements.downloadBackupBtn.addEventListener('click', downloadBackup);
         
         if (elements.backupFrequency) {
             elements.backupFrequency.addEventListener('change', (e) => {
@@ -574,11 +515,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.settingsTabs) {
             elements.settingsTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-                    // Ativar aba
                     elements.settingsTabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    
-                    // Mostrar conteúdo correspondente
                     const tabId = `${tab.dataset.tab}-tab`;
                     document.querySelectorAll('.tab-pane').forEach(pane => {
                         pane.classList.remove('active');
@@ -588,7 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Formulários de configurações
         if (elements.companySettingsForm) {
             elements.companySettingsForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -625,44 +562,33 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Adicionar usuário
         if (elements.addUserBtn) {
-            elements.addUserBtn.addEventListener('click', () => {
-                showUserModal();
-            });
+            elements.addUserBtn.addEventListener('click', () => showUserModal());
         }
         
         // Modal
         if (elements.modalCancelBtn && elements.modalCloseBtn) {
-            [elements.modalCancelBtn, elements.modalCloseBtn].forEach(btn => {
-                btn.addEventListener('click', closeModal);
-            });
+            [elements.modalCancelBtn, elements.modalCloseBtn].forEach(btn => btn.addEventListener('click', closeModal));
         }
         
         if (elements.modalContainer) {
             elements.modalContainer.addEventListener('click', (e) => {
-                if (e.target === elements.modalContainer) {
-                    closeModal();
-                }
+                if (e.target === elements.modalContainer) closeModal();
             });
         }
         
         if (elements.modalSaveBtn) {
             elements.modalSaveBtn.addEventListener('click', () => {
-                if (onSaveCallback && onSaveCallback()) {
-                    closeModal();
-                }
+                if (onSaveCallback && onSaveCallback()) closeModal();
             });
         }
         
-        // Botões de ação nas tabelas (delegação de eventos)
+        // Botões de ação nas tabelas
         document.querySelector('main').addEventListener('click', (e) => {
             const target = e.target;
             const id = target.dataset.id;
             
-            if (target.classList.contains('btn-edit')) {
-                showProductModal(id);
-            }
+            if (target.classList.contains('btn-edit')) showProductModal(id);
             
             if (target.classList.contains('btn-delete')) {
                 if (confirm("Tem certeza que deseja excluir este produto?")) {
@@ -684,60 +610,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Filtro de produtos
-        const productSearch = document.getElementById('productSearch');
-        if (productSearch) {
-            productSearch.addEventListener('input', () => {
-                renderProducts();
-            });
-        }
-        
-        const productFilter = document.getElementById('productFilter');
-        if (productFilter) {
-            productFilter.addEventListener('change', () => {
-                renderProducts();
-            });
-        }
-        
-        // Filtro de vendas
-        const salesDateFilter = document.getElementById('salesDateFilter');
-        if (salesDateFilter) {
-            salesDateFilter.addEventListener('change', () => {
-                renderSales();
-            });
-        }
-        
-        const salesPaymentFilter = document.getElementById('salesPaymentFilter');
-        if (salesPaymentFilter) {
-            salesPaymentFilter.addEventListener('change', () => {
-                renderSales();
-            });
-        }
+        // Filtros
+        document.getElementById('productSearch')?.addEventListener('input', renderProducts);
+        document.getElementById('productFilter')?.addEventListener('change', renderProducts);
+        document.getElementById('salesDateFilter')?.addEventListener('change', renderSales);
+        document.getElementById('salesPaymentFilter')?.addEventListener('change', renderSales);
         
         // Gráficos
-        if (elements.chartRange) {
-            elements.chartRange.addEventListener('change', () => {
-                setupCharts();
-            });
-        }
+        if (elements.chartRange) elements.chartRange.addEventListener('change', setupCharts);
         
         // Relatórios
         const reportTypeCards = document.querySelectorAll('.report-type-card');
         reportTypeCards.forEach(card => {
-            // CORREÇÃO: Lógica adicionada para marcar o card de relatório como 'ativo' ao ser clicado.
             card.addEventListener('click', () => {
                 reportTypeCards.forEach(c => c.classList.remove('active'));
                 card.classList.add('active');
-                
                 const reportType = card.dataset.report;
                 showReportOptions(reportType);
             });
         });
         
-        const generateReportBtn = document.getElementById('generateReportBtn');
-        if (generateReportBtn) {
-            generateReportBtn.addEventListener('click', generatePDFReport);
-        }
+        document.getElementById('generateReportBtn')?.addEventListener('click', generatePDFReport);
     };
 
     // --- RENDERIZAÇÃO DE DADOS ---
@@ -775,7 +668,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.lowStockCount) elements.lowStockCount.textContent = lowStockItems.length;
         if (elements.lowStockItems) elements.lowStockItems.textContent = lowStockItems.length === 1 ? '1 item crítico' : `${lowStockItems.length} itens críticos`;
         
-        // Calcular gastos do mês
         const now = new Date();
         const thisMonth = now.getMonth();
         const thisYear = now.getFullYear();
@@ -787,17 +679,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const monthExpensesTotal = monthExpenses.reduce((acc, exp) => acc + exp.value, 0);
         if (elements.monthExpenses) elements.monthExpenses.textContent = formatCurrency(monthExpensesTotal);
         
-        // Calcular média diária
         const daysInMonth = new Date(thisYear, thisMonth + 1, 0).getDate();
         const dailyAverage = monthExpensesTotal / daysInMonth;
         if (elements.dailyAverage) elements.dailyAverage.textContent = formatCurrency(dailyAverage);
         
-        // Maior gasto
         const highestExpense = monthExpenses.length > 0 ? 
             Math.max(...monthExpenses.map(e => e.value)) : 0;
         if (elements.highestExpense) elements.highestExpense.textContent = formatCurrency(highestExpense);
         
-        // Vendas recentes
         if (elements.recentSalesTable) {
             elements.recentSalesTable.innerHTML = '';
             todaySales.slice(-10).reverse().forEach(sale => {
@@ -820,7 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let filteredProducts = [...DB.products];
         
-        // Aplicar filtro de busca
         const searchTerm = document.getElementById('productSearch')?.value.toLowerCase() || '';
         if (searchTerm) {
             filteredProducts = filteredProducts.filter(p => 
@@ -829,7 +717,6 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
         
-        // Aplicar filtro de estoque
         const filterValue = document.getElementById('productFilter')?.value || 'all';
         if (filterValue === 'low') {
             filteredProducts = filteredProducts.filter(p => p.quantity <= p.lowStockThreshold);
@@ -866,7 +753,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let filteredSales = [...DB.sales];
         
-        // Aplicar filtro de data
         const dateFilter = document.getElementById('salesDateFilter')?.value || 'all';
         const now = new Date();
         
@@ -891,7 +777,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Aplicar filtro de pagamento
         const paymentFilter = document.getElementById('salesPaymentFilter')?.value || 'all';
         if (paymentFilter !== 'all') {
             filteredSales = filteredSales.filter(s => s.paymentMethod === paymentFilter);
@@ -974,7 +859,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>`;
         });
         
-        // Atualizar cards de resumo
         const pendingReceivables = DB.receivables.filter(r => r.status === 'Pendente');
         const totalReceivables = pendingReceivables.reduce((acc, r) => acc + r.value, 0);
         
@@ -999,7 +883,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadSettingsForms = () => {
-        // Carregar configurações da empresa
         if (document.getElementById('companyName')) {
             document.getElementById('companyName').value = DB.settings.company.name;
             document.getElementById('companyAddress').value = DB.settings.company.address;
@@ -1007,7 +890,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('companyEmail').value = DB.settings.company.email;
         }
         
-        // Carregar configurações de vendas
         if (document.getElementById('defaultPaymentMethod')) {
             document.getElementById('defaultPaymentMethod').value = DB.settings.sales.defaultPaymentMethod;
             document.getElementById('taxPercentage').value = DB.settings.sales.taxPercentage;
@@ -1015,7 +897,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('enableLowStockAlert').checked = DB.settings.sales.enableLowStockAlert;
         }
         
-        // Carregar configurações de notificações
         if (document.getElementById('notifyLowStock')) {
             document.getElementById('notifyLowStock').checked = DB.settings.notifications.notifyLowStock;
             document.getElementById('notifyOverdue').checked = DB.settings.notifications.notifyOverdue;
@@ -1023,7 +904,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('notificationSound').value = DB.settings.notifications.notificationSound;
         }
         
-        // Carregar configurações de backup
         if (document.getElementById('backupFrequency')) {
             document.getElementById('backupFrequency').value = DB.settings.backup.frequency;
             document.getElementById('backupNotifications').checked = DB.settings.backup.notifyOnBackup;
@@ -1042,7 +922,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const days = parseInt(elements.chartRange?.value || '30');
         
-        // Calcular vendas por categoria para os últimos 'days' dias
         const salesByCategory = {};
         const endDate = new Date();
         const startDate = new Date();
@@ -1112,7 +991,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const ctx = document.getElementById('productsChart');
         if (!ctx) return;
         
-        // Calcular top 5 produtos mais vendidos
         const productSales = {};
         
         DB.sales.forEach(sale => {
@@ -1265,8 +1143,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <hr>
             <h4>Adicionar Produtos</h4>
-            <div class="sale-product-adder">
-                <div class="form-group">
+            <div class="sale-product-adder" style="display: flex; gap: 10px; align-items: flex-end;">
+                <div class="form-group" style="flex-grow: 1;">
                     <label for="saleProductSelect">Produto</label>
                     <select id="saleProductSelect">${productOptions}</select>
                 </div>
@@ -1277,7 +1155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button type="button" class="btn btn-primary" id="addSaleItemBtn">Adicionar</button>
             </div>
             <div id="saleItemsList" class="sale-items-list"></div>
-            <div id="saleTotal" class="sale-total">Total: R$ 0,00</div>
+            <div id="saleTotal" class="sale-total" style="text-align: right; font-weight: bold; margin: 10px 0;">Total: R$ 0,00</div>
             <hr>
             <h4>Forma de Pagamento</h4>
             <div class="form-group">
@@ -1306,18 +1184,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const paymentMethod = document.getElementById('paymentMethod').value;
             let payCash = 0;
             let payCard = 0;
+            const saleTotal = currentSaleItems.reduce((acc, item) => acc + item.total, 0);
 
             if (paymentMethod === 'Mixto') {
                 payCash = parseFormattedNumber(document.getElementById('paymentCash').value);
                 payCard = parseFormattedNumber(document.getElementById('paymentCard').value);
             } else if (paymentMethod === 'Dinheiro') {
-                payCash = currentSaleItems.reduce((acc, item) => acc + item.total, 0);
-            } else if (paymentMethod === 'Cartão') {
-                payCard = currentSaleItems.reduce((acc, item) => acc + item.total, 0);
+                payCash = saleTotal;
+            } else if (paymentMethod === 'Cartão' || paymentMethod === 'PIX') {
+                payCard = saleTotal;
             }
-
+            
             const totalPaid = payCash + payCard;
-            const saleTotal = currentSaleItems.reduce((acc, item) => acc + item.total, 0);
 
             if (currentSaleItems.length === 0) {
                 alert("Adicione pelo menos um produto à venda.");
@@ -1334,20 +1212,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 return false;
             }
 
-            // Atualizar estoque
             currentSaleItems.forEach(item => {
                 const productInDB = DB.products.find(p => p.id === item.id);
                 if (productInDB) {
                     productInDB.quantity -= item.quantity;
-                    
-                    // Verificar se estoque ficou baixo
                     if (productInDB.quantity <= productInDB.lowStockThreshold && DB.settings.notifications.notifyLowStock) {
                         showNotification('Estoque Baixo', `O produto "${productInDB.name}" está com estoque baixo.`, 'warning');
                     }
                 }
             });
 
-            // Registrar venda
             DB.sales.push({
                 id: Date.now(),
                 date: new Date().toISOString(),
@@ -1373,7 +1247,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         });
 
-        // Configurar eventos após o modal ser aberto
         setTimeout(() => {
             const addSaleItemBtn = document.getElementById('addSaleItemBtn');
             const paymentMethodSelect = document.getElementById('paymentMethod');
@@ -1410,7 +1283,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             total: product.salePrice * quantity
                         });
                     }
-
                     updateSaleItemsList();
                 });
             }
@@ -1432,6 +1304,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentSaleItems.forEach(item => {
                     const itemEl = document.createElement('div');
                     itemEl.className = 'sale-item';
+                    itemEl.style.display = 'flex';
+                    itemEl.style.justifyContent = 'space-between';
+                    itemEl.style.padding = '5px 0';
                     itemEl.innerHTML = `
                         <span>${item.quantity}x ${item.name}</span>
                         <span>${formatCurrency(item.total)}</span>
@@ -1520,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="form-group">
                 <label for="receivableDueDate">Data de Vencimento</label>
-                            <input type="date" id="receivableDueDate" value="${getTodayDate()}" required>
+                <input type="date" id="receivableDueDate" value="${getTodayDate()}" required>
             </div>
         `;
 
@@ -1586,19 +1461,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return false;
             }
 
-            // Verificar se usuário já existe
             if (DB.users.find(u => u.username === username)) {
                 alert("Já existe um usuário com este nome de usuário.");
                 return false;
             }
 
-            DB.users.push({
-                name,
-                username,
-                password,
-                role
-            });
-
+            DB.users.push({ name, username, password, role });
             saveDB();
             showNotification('Usuário Adicionado', `Usuário "${name}" adicionado com sucesso.`, 'success');
             return true;
@@ -1620,7 +1488,6 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'sales':
                 reportOptionsTitle.textContent = 'Opções do Relatório de Vendas';
                 if (reportCategoryGroup) reportCategoryGroup.classList.remove('hidden');
-                // Preencher categorias
                 break;
             case 'products':
                 reportOptionsTitle.textContent = 'Opções do Relatório de Estoque';
@@ -1636,14 +1503,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
         
-        // Definir datas padrão (mês atual)
         const today = new Date();
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-        const startDateInput = document.getElementById('reportStartDate');
-        const endDateInput = document.getElementById('reportEndDate');
-        
-        if (startDateInput) startDateInput.value = firstDay.toISOString().slice(0, 10);
-        if (endDateInput) endDateInput.value = today.toISOString().slice(0, 10);
+        document.getElementById('reportStartDate').value = firstDay.toISOString().slice(0, 10);
+        document.getElementById('reportEndDate').value = today.toISOString().slice(0, 10);
     };
 
     // --- RELATÓRIOS PDF ---
@@ -1665,11 +1528,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Título do relatório
         doc.setFontSize(18);
         doc.text(`Relatório - ${reportType.toUpperCase()}`, 105, 15, { align: 'center' });
-        
-        // Período do relatório
         doc.setFontSize(12);
         doc.text(`Período: ${formatDate(startDate)} até ${formatDate(endDate)}`, 105, 25, { align: 'center' });
         
@@ -1677,112 +1537,59 @@ document.addEventListener('DOMContentLoaded', () => {
         
         switch(reportType) {
             case 'sales':
-                const filteredSales = DB.sales.filter(s => {
-                    const saleDate = new Date(s.date);
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    return saleDate >= start && saleDate <= end;
-                });
-                
+                const filteredSales = DB.sales.filter(s => new Date(s.date) >= new Date(startDate) && new Date(s.date) <= new Date(endDate));
                 doc.text(`Total de Vendas: ${formatCurrency(filteredSales.reduce((acc, s) => acc + s.total, 0))}`, 14, yPosition);
                 yPosition += 10;
-                
-                // Tabela de vendas
                 doc.autoTable({
                     startY: yPosition,
                     head: [['Data', 'Cliente', 'Valor', 'Pagamento']],
-                    body: filteredSales.map(s => [
-                        formatDate(s.date),
-                        s.client,
-                        formatCurrency(s.total),
-                        s.paymentMethod || 'N/D'
-                    ])
+                    body: filteredSales.map(s => [formatDate(s.date), s.client, formatCurrency(s.total), s.paymentMethod || 'N/D'])
                 });
                 break;
-                
             case 'products':
                 doc.text(`Valor Total do Estoque: ${formatCurrency(DB.products.reduce((acc, p) => acc + (p.quantity * p.costPrice), 0))}`, 14, yPosition);
                 yPosition += 10;
-                
-                // Tabela de produtos
                 doc.autoTable({
                     startY: yPosition,
                     head: [['Nome', 'Estoque', 'Mínimo', 'Preço Venda']],
-                    body: DB.products.map(p => [
-                        p.name,
-                        p.quantity,
-                        p.lowStockThreshold,
-                        formatCurrency(p.salePrice)
-                    ])
+                    body: DB.products.map(p => [p.name, p.quantity, p.lowStockThreshold, formatCurrency(p.salePrice)])
                 });
                 break;
-                
             case 'financial':
-                const filteredExpenses = DB.expenses.filter(e => {
-                    const expenseDate = new Date(e.date);
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    return expenseDate >= start && expenseDate <= end;
-                });
-                
-                const totalSales = DB.sales.filter(s => {
-                    const saleDate = new Date(s.date);
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    return saleDate >= start && saleDate <= end;
-                }).reduce((acc, s) => acc + s.total, 0);
-                
-                const totalExpenses = filteredExpenses.reduce((acc, e) => acc + e.value, 0);
+                const salesInPeriod = DB.sales.filter(s => new Date(s.date) >= new Date(startDate) && new Date(s.date) <= new Date(endDate));
+                const expensesInPeriod = DB.expenses.filter(e => new Date(e.date) >= new Date(startDate) && new Date(e.date) <= new Date(endDate));
+                const totalSales = salesInPeriod.reduce((acc, s) => acc + s.total, 0);
+                const totalExpenses = expensesInPeriod.reduce((acc, e) => acc + e.value, 0);
                 const profit = totalSales - totalExpenses;
                 
-                doc.text(`Receitas: ${formatCurrency(totalSales)}`, 14, yPosition);
-                yPosition += 7;
-                doc.text(`Despesas: ${formatCurrency(totalExpenses)}`, 14, yPosition);
-                yPosition += 7;
-                doc.text(`Lucro: ${formatCurrency(profit)}`, 14, yPosition);
-                yPosition += 10;
+                doc.text(`Receitas: ${formatCurrency(totalSales)}`, 14, yPosition); yPosition += 7;
+                doc.text(`Despesas: ${formatCurrency(totalExpenses)}`, 14, yPosition); yPosition += 7;
+                doc.text(`Lucro: ${formatCurrency(profit)}`, 14, yPosition); yPosition += 10;
                 
-                // Tabela de gastos
                 doc.autoTable({
                     startY: yPosition,
                     head: [['Data', 'Descrição', 'Categoria', 'Valor']],
-                    body: filteredExpenses.map(e => [
-                        formatDate(e.date),
-                        e.description,
-                        e.category,
-                        formatCurrency(e.value)
-                    ])
+                    body: expensesInPeriod.map(e => [formatDate(e.date), e.description, e.category, formatCurrency(e.value)])
                 });
                 break;
-                
             case 'receivables':
                 const pendingReceivables = DB.receivables.filter(r => r.status === 'Pendente');
-                
                 doc.text(`Total a Receber: ${formatCurrency(pendingReceivables.reduce((acc, r) => acc + r.value, 0))}`, 14, yPosition);
                 yPosition += 10;
-                
-                // Tabela de contas a receber
                 doc.autoTable({
                     startY: yPosition,
                     head: [['Cliente', 'Valor', 'Vencimento', 'Status']],
-                    body: DB.receivables.map(r => [
-                        r.client,
-                        formatCurrency(r.value),
-                        formatDate(r.dueDate),
-                        r.status
-                    ])
+                    body: DB.receivables.map(r => [r.client, formatCurrency(r.value), formatDate(r.dueDate), r.status])
                 });
                 break;
         }
         
-        // Salvar o PDF
         doc.save(`relatorio_${reportType}_${getTodayDate()}.pdf`);
         showNotification('Relatório Gerado', `Relatório ${reportType} gerado com sucesso.`, 'success');
     };
 
     // --- OUTRAS FUNÇÕES ---
     const clearTodaySales = () => {
-        // CORREÇÃO: A lógica foi alterada para comparar apenas a parte da data (YYYY-MM-DD), ignorando as horas.
         if (confirm('Tem certeza que deseja limpar todas as vendas de hoje? Esta ação não pode ser desfeita.')) {
             const today = getTodayDate();
             DB.sales = DB.sales.filter(sale => sale.date.slice(0, 10) !== today);
@@ -1803,15 +1610,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // CORREÇÃO: Adiciona a classe 'collapsed' no menu em telas móveis para que ele comece fechado.
+        // CORREÇÃO: Listener do formulário de login movido para cá para garantir que ele seja ativado no início.
+        if (elements.loginForm) {
+            elements.loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = elements.username.value;
+                const password = elements.password.value;
+                
+                if (login(username, password)) {
+                    elements.username.value = '';
+                    elements.password.value = '';
+                } else {
+                    alert('Usuário ou senha incorretos.');
+                }
+            });
+        }
+        
+        // Adiciona a classe 'collapsed' no menu em telas móveis para que ele comece fechado.
         if (window.innerWidth <= 768) {
             elements.sidebar.classList.add('collapsed');
         }
         
-        // Inicializar sistema de login
+        // Inicializar sistema de login (que decide qual tela mostrar)
         setupLoginSystem();
         
-        // Adicionar event listeners para botões principais
+        // Adicionar event listeners para botões de criação que só existem na tela principal
         document.getElementById('addProductBtn')?.addEventListener('click', () => showProductModal());
         document.getElementById('addSaleBtn')?.addEventListener('click', showSaleModal);
         document.getElementById('addExpenseBtn')?.addEventListener('click', showExpenseModal);
