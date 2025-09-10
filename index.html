@@ -55,6 +55,7 @@
                         <li><a href="#" class="nav-link" data-target="sales"><i class="fas fa-shopping-cart"></i> <span>Vendas</span></a></li>
                         <li><a href="#" class="nav-link" data-target="expenses"><i class="fas fa-money-bill-wave"></i> <span>Gastos</span></a></li>
                         <li><a href="#" class="nav-link" data-target="receivables"><i class="fas fa-hand-holding-usd"></i> <span>Contas a Receber</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="cashclosing"><i class="fas fa-cash-register"></i> <span>Fechamento de Caixa</span></a></li>
                         <li><a href="#" class="nav-link" data-target="reports"><i class="fas fa-file-alt"></i> <span>Relatórios</span></a></li>
                         <li><a href="#" class="nav-link" data-target="backup"><i class="fas fa-database"></i> <span>Backup</span></a></li>
                         <li><a href="#" class="nav-link" data-target="settings"><i class="fas fa-cog"></i> <span>Configurações</span></a></li>
@@ -269,7 +270,7 @@
                                             <option value="today">Hoje</option>
                                             <option value="week">Esta semana</option>
                                             <option value="month">Este mês</option>
-                                            <option value="all" selected>Todos</option>
+                                            <option value="all">Todos</option>
                                         </select>
                                     </div>
                                     <div class="filter-group">
@@ -385,6 +386,59 @@
                                         <tbody id="receivablesTable">
                                             </tbody>
                                     </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="cashclosing" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-cash-register"></i> Fechamento de Caixa</h2>
+                            </div>
+                            <div class="card-body" style="padding: 20px;">
+                                <div class="cash-closing-form">
+                                    <div class="form-group">
+                                        <label for="cashClosingDate">Data do Fechamento</label>
+                                        <input type="date" id="cashClosingDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cashClosingInitialValue">Valor Inicial (Troco)</label>
+                                        <input type="text" id="cashClosingInitialValue" placeholder="0,00">
+                                    </div>
+                                    <button class="btn btn-primary" id="generateClosingBtn">
+                                        <i class="fas fa-calculator"></i> Gerar Fechamento
+                                    </button>
+                                </div>
+                                
+                                <div class="closing-summary hidden" id="closingResult">
+                                    <h3 id="closingDateResult">Resumo do dia: </h3>
+                                    <div class="summary-item">
+                                        <span>(+) Vendas em Dinheiro</span>
+                                        <span id="closingCashSales">R$ 0,00</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span>(+) Vendas (PIX / Cartão)</span>
+                                        <span id="closingCardSales">R$ 0,00</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <strong>(=) Total Bruto de Vendas</strong>
+                                        <strong id="closingTotalSales">R$ 0,00</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="summary-item">
+                                        <span>(+) Valor Inicial (Troco)</span>
+                                        <span id="closingInitialValue">R$ 0,00</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span>(-) Total de Gastos do Dia</span>
+                                        <span id="closingExpenses">R$ 0,00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="summary-item">
+                                        <strong>(=) Valor Esperado em Caixa</strong>
+                                        <strong id="closingExpectedCash">R$ 0,00</strong>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -693,5 +747,6 @@
     </div>
 
     <script src="script.js"></script>
+    
 </body>
 </html>
