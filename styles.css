@@ -554,6 +554,11 @@ body.light-theme .form-group label {
     box-shadow: 0 0 0 2px rgba(255, 94, 0, 0.2);
 }
 
+select option {
+    background: var(--bg-card-dark);
+    color: var(--text-light);
+}
+
 .checkbox-label {
     display: flex;
     align-items: center;
@@ -911,7 +916,6 @@ body.light-theme .modal-close {
         justify-content: space-between;
     }
     
-    /* CORREÇÃO: Lógica do menu lateral para telas móveis */
     .sidebar {
         transform: translateX(-100%);
     }
@@ -920,7 +924,6 @@ body.light-theme .modal-close {
         transform: translateX(0);
         width: var(--sidebar-width);
     }
-    /* Fim da correção */
     
     .main-content,
     .sidebar.collapsed ~ .main-content {
@@ -952,10 +955,34 @@ body.light-theme .modal-close {
         background: white;
         color: black;
     }
-
-    /* Correção para opções de dropdown no tema escuro */
-select option {
-    background: var(--bg-card-dark);
-    color: var(--text-light);
 }
+
+.closing-summary {
+    margin-top: 30px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    font-size: 1.1rem;
+}
+
+.summary-item:not(:last-child) {
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.summary-item strong {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 10px 0;
 }
