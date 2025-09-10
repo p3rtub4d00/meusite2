@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONTEINER BEER - Sistema de Gestão</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fas fa-beer"></i>
+                <h1>CONTEINER BEER</h1>
+                <p>Sistema de Gestão Comercial</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-login">Entrar no Sistema</button>
+            </form>
+            <div class="login-footer">
+                <p>Use admin / admin para primeiro acesso</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainSystem" class="hidden">
+        <div class="system-container">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo">
+                        <i class="fas fa-beer"></i>
+                        <span>CONTEINER BEER</span>
+                    </div>
+                    <button id="sidebarToggle" class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+                
+                <nav class="sidebar-nav">
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-target="dashboard"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="products"><i class="fas fa-box"></i> <span>Produtos</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="sales"><i class="fas fa-shopping-cart"></i> <span>Vendas</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="expenses"><i class="fas fa-money-bill-wave"></i> <span>Gastos</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="receivables"><i class="fas fa-hand-holding-usd"></i> <span>Contas a Receber</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="reports"><i class="fas fa-file-alt"></i> <span>Relatórios</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="backup"><i class="fas fa-database"></i> <span>Backup</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="settings"><i class="fas fa-cog"></i> <span>Configurações</span></a></li>
+                    </ul>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name" id="userName">Administrador</span>
+                            <span class="user-role">Gerente</span>
+                        </div>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <header class="content-header">
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <div class="header-actions">
+                        <button id="themeToggle" class="btn btn-icon" title="Alternar tema">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                        <div class="notifications">
+                            <button id="notificationsBtn" class="btn btn-icon" title="Notificações">
+                                <i class="fas fa-bell"></i>
+                                <span id="notificationCount" class="notification-badge hidden">0</span>
+                            </button>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="btn btn-primary" id="quickSaleBtn">
+                                <i class="fas fa-plus"></i> Venda Rápida
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="content-wrapper">
+                    <div id="notificationsPanel" class="notifications-panel hidden">
+                        <div class="notifications-header">
+                            <h3>Notificações</h3>
+                            <button id="clearNotificationsBtn" class="btn btn-sm">Limpar Tudo</button>
+                        </div>
+                        <div id="notificationsList" class="notifications-list">
+                            </div>
+                    </div>
+
+                    <section id="dashboard" class="content-section active">
+                        <div class="dashboard-grid">
+                            <div class="row">
+                                <div class="card card-horizontal">
+                                    <div class="card-icon">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3>Faturamento do Dia</h3>
+                                        <div class="value" id="todayRevenue">R$ 0,00</div>
+                                        <div class="subtitle" id="salesCount">0 vendas</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card card-horizontal">
+                                    <div class="card-icon">
+                                        <i class="fas fa-boxes"></i>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3>Valor do Estoque</h3>
+                                        <div class="value" id="stockValue">R$ 0,00</div>
+                                        <div class="subtitle" id="stockItems">0 itens</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card card-horizontal">
+                                    <div class="card-icon">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3>Contas a Receber</h3>
+                                        <div class="value" id="receivablesValue">R$ 0,00</div>
+                                        <div class="subtitle" id="receivablesCount">0 pendentes</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card card-horizontal card-warning">
+                                    <div class="card-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3>Estoque Baixo</h3>
+                                        <div class="value" id="lowStockCount">0</div>
+                                        <div class="subtitle" id="lowStockItems">Itens críticos</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3>Vendas por Categoria</h3>
+                                        <select id="chartRange">
+                                            <option value="7">7 dias</option>
+                                            <option value="15">15 dias</option>
+                                            <option value="30" selected>30 dias</option>
+                                        </select>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="salesChart" height="250"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3>Top 5 Produtos</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="productsChart" height="250"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3>Vendas Recentes</h3>
+                                        <button class="btn btn-sm" id="clearSalesBtn">Limpar Vendas de Hoje</button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table id="recentSalesTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Data/Hora</th>
+                                                        <th>Cliente</th>
+                                                        <th>Produtos</th>
+                                                        <th>Valor</th>
+                                                        <th>Pagamento</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="products" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-box"></i> Gerenciamento de Produtos</h2>
+                                <button class="btn btn-primary" id="addProductBtn">
+                                    <i class="fas fa-plus"></i> Adicionar Produto
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-controls">
+                                    <div class="search-box">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" id="productSearch" placeholder="Buscar produtos...">
+                                    </div>
+                                    <div class="table-actions">
+                                        <select id="productFilter">
+                                            <option value="all">Todos os produtos</option>
+                                            <option value="low">Estoque baixo</option>
+                                            <option value="out">Sem estoque</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nome</th>
+                                                <th>Estoque Atual</th>
+                                                <th>Estoque Mínimo</th>
+                                                <th>Preço de Custo</th>
+                                                <th>Preço de Venda</th>
+                                                <th>Lucro</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="productsTable">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="sales" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-shopping-cart"></i> Registro de Vendas</h2>
+                                <button class="btn btn-primary" id="addSaleBtn">
+                                    <i class="fas fa-plus"></i> Nova Venda
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="filters">
+                                    <div class="filter-group">
+                                        <label for="salesDateFilter">Data:</label>
+                                        <select id="salesDateFilter">
+                                            <option value="today">Hoje</option>
+                                            <option value="week">Esta semana</option>
+                                            <option value="month">Este mês</option>
+                                            <option value="all" selected>Todos</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label for="salesPaymentFilter">Pagamento:</label>
+                                        <select id="salesPaymentFilter">
+                                            <option value="all">Todos</option>
+                                            <option value="Dinheiro">Dinheiro</option>
+                                            <option value="Cartão">Cartão</option>
+                                            <option value="PIX">PIX</option>
+                                            <option value="Mixto">Misto</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Data/Hora</th>
+                                                <th>Cliente</th>
+                                                <th>Produtos</th>
+                                                <th>Valor Total</th>
+                                                <th>Pagamento</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="salesTable">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="expenses" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-money-bill-wave"></i> Controle de Gastos</h2>
+                                <button class="btn btn-primary" id="addExpenseBtn">
+                                    <i class="fas fa-plus"></i> Adicionar Gasto
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="summary-cards">
+                                    <div class="summary-card">
+                                        <h4>Gastos do Mês</h4>
+                                        <div class="value" id="monthExpenses">R$ 0,00</div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <h4>Média Diária</h4>
+                                        <div class="value" id="dailyAverage">R$ 0,00</div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <h4>Maior Gasto</h4>
+                                        <div class="value" id="highestExpense">R$ 0,00</div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Descrição</th>
+                                                <th>Categoria</th>
+                                                <th>Valor</th>
+                                                <th>Fornecedor</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="expensesTable">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="receivables" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-hand-holding-usd"></i> Contas a Receber</h2>
+                                <button class="btn btn-primary" id="addReceivableBtn">
+                                    <i class="fas fa-plus"></i> Adicionar Conta
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="summary-cards">
+                                    <div class="summary-card">
+                                        <h4>Total a Receber</h4>
+                                        <div class="value" id="totalReceivables">R$ 0,00</div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <h4>Vencendo esta semana</h4>
+                                        <div class="value" id="weekReceivables">R$ 0,00</div>
+                                    </div>
+                                    <div class="summary-card card-warning">
+                                        <h4>Atrasados</h4>
+                                        <div class="value" id="overdueReceivables">R$ 0,00</div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Cliente</th>
+                                                <th>Valor</th>
+                                                <th>Data de Vencimento</th>
+                                                <th>Status</th>
+                                                <th>Dias</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="receivablesTable">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="reports" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-file-alt"></i> Relatórios</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="report-types">
+                                    <div class="report-type-card" data-report="sales">
+                                        <div class="report-icon">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <h3>Relatório de Vendas</h3>
+                                        <p>Análise detalhada do desempenho de vendas</p>
+                                    </div>
+                                    
+                                    <div class="report-type-card" data-report="products">
+                                        <div class="report-icon">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                        <h3>Relatório de Estoque</h3>
+                                        <p>Controle de inventário e produtos</p>
+                                    </div>
+                                    
+                                    <div class="report-type-card" data-report="financial">
+                                        <div class="report-icon">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+                                        <h3>Relatório Financeiro</h3>
+                                        <p>Balanço de receitas e despesas</p>
+                                    </div>
+                                    
+                                    <div class="report-type-card" data-report="receivables">
+                                        <div class="report-icon">
+                                            <i class="fas fa-hand-holding-usd"></i>
+                                        </div>
+                                        <h3>Contas a Receber</h3>
+                                        <p>Relatório de pendências financeiras</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="report-options hidden" id="reportOptions">
+                                    <h3 id="reportOptionsTitle">Opções do Relatório</h3>
+                                    <div class="form-group">
+                                        <label for="reportStartDate">Data Inicial</label>
+                                        <input type="date" id="reportStartDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="reportEndDate">Data Final</label>
+                                        <input type="date" id="reportEndDate">
+                                    </div>
+                                    <div class="form-group" id="reportCategoryGroup">
+                                        <label for="reportCategory">Categoria</label>
+                                        <select id="reportCategory">
+                                            <option value="all">Todas as categorias</option>
+                                            </select>
+                                    </div>
+                                    <button class="btn btn-primary" id="generateReportBtn">
+                                        <i class="fas fa-download"></i> Gerar Relatório
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="backup" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-database"></i> Backup de Dados</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="backup-status">
+                                    <div class="backup-info">
+                                        <div class="info-item">
+                                            <label>Último backup:</label>
+                                            <span id="lastBackup">Nunca</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Próximo backup automático:</label>
+                                            <span id="nextBackup">--:--:--</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Tamanho dos dados:</label>
+                                            <span id="dataSize">0 KB</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="backup-actions">
+                                    <div class="backup-action-card">
+                                        <div class="action-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <h3>Fazer Backup Agora</h3>
+                                        <p>Salve uma cópia de segurança manualmente</p>
+                                        <button class="btn" id="backupNowBtn">Executar Backup</button>
+                                    </div>
+                                    
+                                    <div class="backup-action-card">
+                                        <div class="action-icon">
+                                            <i class="fas fa-cloud-download-alt"></i>
+                                        </div>
+                                        <h3>Restaurar Backup</h3>
+                                        <p>Recupere dados de um backup anterior</p>
+                                        <button class="btn" id="restoreBackupBtn">Restaurar</button>
+                                    </div>
+                                    
+                                    <div class="backup-action-card">
+                                        <div class="action-icon">
+                                            <i class="fas fa-download"></i>
+                                        </div>
+                                        <h3>Download</h3>
+                                        <p>Faça download dos dados para arquivar</p>
+                                        <button class="btn" id="downloadBackupBtn">Download</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="backup-settings">
+                                    <h3>Configurações de Backup</h3>
+                                    <div class="form-group">
+                                        <label for="backupFrequency">Frequência de Backup Automático</label>
+                                        <select id="backupFrequency">
+                                            <option value="15">15 minutos</option>
+                                            <option value="30" selected>30 minutos</option>
+                                            <option value="60">1 hora</option>
+                                            <option value="360">6 horas</option>
+                                            <option value="720">12 horas</option>
+                                            <option value="1440">24 horas</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="backupNotifications" checked>
+                                            <span class="checkmark"></span>
+                                            Notificar quando backup for realizado
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="settings" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-cog"></i> Configurações do Sistema</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="settings-tabs">
+                                    <div class="tabs">
+                                        <button class="tab-btn active" data-tab="company">Empresa</button>
+                                        <button class="tab-btn" data-tab="sales">Vendas</button>
+                                        <button class="tab-btn" data-tab="notifications">Notificações</button>
+                                        <button class="tab-btn" data-tab="users">Usuários</button>
+                                    </div>
+                                    
+                                    <div class="tab-content">
+                                        <div class="tab-pane active" id="company-tab">
+                                            <form id="companySettingsForm">
+                                                <div class="form-group">
+                                                    <label for="companyName">Nome da Empresa</label>
+                                                    <input type="text" id="companyName" value="CONTEINER BEER">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="companyAddress">Endereço</label>
+                                                    <textarea id="companyAddress" rows="3"></textarea>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="companyPhone">Telefone</label>
+                                                    <input type="text" id="companyPhone">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="companyEmail">Email</label>
+                                                    <input type="email" id="companyEmail">
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                                            </form>
+                                        </div>
+                                        
+                                        <div class="tab-pane" id="sales-tab">
+                                            <form id="salesSettingsForm">
+                                                <div class="form-group">
+                                                    <label for="defaultPaymentMethod">Método de Pagamento Padrão</label>
+                                                    <select id="defaultPaymentMethod">
+                                                        <option value="Dinheiro">Dinheiro</option>
+                                                        <option value="PIX">PIX</option>
+                                                        <option value="Cartão">Cartão</option>
+                                                        <option value="Mixto">Misto</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="taxPercentage">Percentual de Impostos (%)</label>
+                                                    <input type="number" id="taxPercentage" min="0" max="100" step="0.1" value="0">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" id="enableStockControl" checked>
+                                                        <span class="checkmark"></span>
+                                                        Controlar estoque automaticamente
+                                                    </label>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" id="enableLowStockAlert" checked>
+                                                        <span class="checkmark"></span>
+                                                        Alertas de estoque baixo
+                                                    </label>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                                            </form>
+                                        </div>
+                                        
+                                        <div class="tab-pane" id="notifications-tab">
+                                            <form id="notificationsSettingsForm">
+                                                <div class="form-group">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" id="notifyLowStock" checked>
+                                                        <span class="checkmark"></span>
+                                                        Notificar sobre estoque baixo
+                                                    </label>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" id="notifyOverdue" checked>
+                                                        <span class="checkmark"></span>
+                                                        Notificar sobre contas vencidas
+                                                    </label>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" id="notifyDailySales" checked>
+                                                        <span class="checkmark"></span>
+                                                        Resumo diário de vendas
+                                                    </label>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="notificationSound">Som de Notificação</label>
+                                                    <select id="notificationSound">
+                                                        <option value="none">Nenhum</option>
+                                                        <option value="default" selected>Padrão</option>
+                                                        <option value="chime">Sino</option>
+                                                        <option value="bell">Sino</option>
+                                                    </select>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                                            </form>
+                                        </div>
+                                        
+                                        <div class="tab-pane" id="users-tab">
+                                            <div class="users-list">
+                                                <div class="user-card">
+                                                    <div class="user-avatar">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                    <div class="user-details">
+                                                        <h4>Administrador</h4>
+                                                        <p>admin</p>
+                                                        <span class="user-role">Superusuário</span>
+                                                    </div>
+                                                    <div class="user-actions">
+                                                        <button class="btn btn-sm btn-icon" title="Editar">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-icon" title="Alterar senha">
+                                                            <i class="fas fa-key"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-primary" id="addUserBtn">
+                                                <i class="fas fa-plus"></i> Adicionar Usuário
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="appModal" class="modal-container hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+                <button id="modalCloseBtn" class="modal-close">&times;</button>
+            </div>
+            <div id="modalBody" class="modal-body">
+                </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modalCancelBtn">Cancelar</button>
+                <button class="btn btn-primary" id="modalSaveBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p>Processando...</p>
+    </div>
+
+    <script src="script.js"></script>
+    
+    <script>
+    // Função para garantir que o formulário de login funcione corretamente
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        
+        if (loginForm && usernameInput && passwordInput) {
+            // Focar no campo de usuário ao carregar a página
+            setTimeout(() => {
+                usernameInput.focus();
+            }, 100);
+            
+            // Prevenir comportamento padrão do formulário
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        }
+        
+        // Verificar se há dados salvos
+        const savedDB = localStorage.getItem('conteinerBeerDB');
+        if (!savedDB) {
+            // Inicializar dados padrão se não existirem
+            const defaultDB = {
+                products: [],
+                sales: [],
+                expenses: [],
+                receivables: [],
+                settings: {
+                    company: { name: "CONTEINER BEER", address: "", phone: "", email: "" },
+                    sales: { defaultPaymentMethod: "Dinheiro", taxPercentage: 0, enableStockControl: true, enableLowStockAlert: true },
+                    notifications: { notifyLowStock: true, notifyOverdue: true, notifyDailySales: true, notificationSound: "default" },
+                    backup: { frequency: 30, notifyOnBackup: true }
+                },
+                users: [{ username: "admin", password: "admin", name: "Administrador", role: "admin" }],
+                notifications: []
+            };
+            localStorage.setItem('conteinerBeerDB', JSON.stringify(defaultDB));
+        }
+    });
+    </script>
+</body>
+</html>
